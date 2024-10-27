@@ -1,9 +1,20 @@
+/*=============================================================================
+ * Copyright (c) 2021, Franco Bucafusco <franco_bucafusco@yahoo.com.ar>
+ * 					   Martin N. Menendez <mmenendez@fi.uba.ar>
+ * All rights reserved.
+ * License: Free
+ * Date: 2024/10/27
+ * Version: v1.2
+ *===========================================================================*/
+
 /*==================[inclusiones]============================================*/
+#include "gpio.h"
+
 #include <iostream>
 #include <thread>
 #include <vector>
 #include <chrono>
-#include "gpio.h"
+
 #include "keys.h"
 
 /*==================[definiciones y macros]==================================*/
@@ -23,7 +34,7 @@ extern std::vector<t_key_config> keys_config;
 void gpio_init( void );
 
 // Prototipo de funcion de la tarea
-void tarea_led(size_t index);
+void tarea_led( size_t index );
 
 /*==================[funcion principal]======================================*/
 
@@ -39,16 +50,16 @@ int main()
     std::vector<std::thread> led_threads;
 
     // Crear tarea en freeRTOS
-    for (size_t i = 0; i < leds_t.size(); ++i)
+    for ( size_t i = 0; i < leds_t.size(); ++i )
     {
-        led_threads.emplace_back(tarea_led, i);
+        led_threads.emplace_back( tarea_led, i );
     }
 
     // Inicializo driver de teclas
     keys_init();
 
     // joining threads
-    for (auto &thread : led_threads)
+    for ( auto &thread : led_threads )
     {
         thread.join();
     }
@@ -61,35 +72,35 @@ int main()
 /*==================[definiciones de funciones internas]=====================*/
 void gpio_init()
 {
-    gpioInit(gpioMap_t::GPIO0, true);
-	
-    for (auto &gpio : gpio_t)
+    gpioInit( gpioMap_t::GPIO0, true );
+
+    for ( auto &gpio : gpio_t )
     {
-        gpioInit(gpio, true);
+        gpioInit( gpio, true );
     }
 }
 
 /*==================[definiciones de funciones externas]=====================*/
 // Implementacion de funcion de la tarea
-void tarea_led(size_t index)
+void tarea_led( size_t index )
 {
-    while (true)
+    while ( true )
     {
         keys_config[index].sem_btn.acquire(); // Espera a la liberación del semáforo de su tecla específica
 
-        int dif = keys_get_diff(index);
-        
-        if (dif == KEYS_INVALID_TIME)
+        int dif = keys_get_diff( index );
+
+        if ( dif == KEYS_INVALID_TIME )
         {
             continue;
         }
 
-        keys_clear_diff(index);
+        keys_clear_diff( index );
 
-        gpioWrite(leds_t[index], true);
-        gpioWrite(gpio_t[index], true);
-        std::this_thread::sleep_for(std::chrono::milliseconds(dif));
-        gpioWrite(leds_t[index], false);
-        gpioWrite(gpio_t[index], false);
+        gpioWrite( leds_t[index], true );
+        gpioWrite( gpio_t[index], true );
+        std::this_thread::sleep_for( std::chrono::milliseconds( dif ) );
+        gpioWrite( leds_t[index], false );
+        gpioWrite( gpio_t[index], false );
     }
 }

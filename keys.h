@@ -40,9 +40,9 @@ struct t_key_data
 /* methods ================================================================= */
 
 void keys_init();
-int keys_get_diff(uint32_t index);
-void keys_clear_diff(uint32_t index);
+int keys_get_diff( uint32_t index );
+void keys_clear_diff( uint32_t index );
 void keys_service_task();
-void keys_Update(uint32_t index);
+void keys_Update( uint32_t index );
 
 #endif /* KEYS_H_ */

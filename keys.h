@@ -4,14 +4,12 @@
 #include "gpio.h"
 #include <semaphore> // Cambiado para usar binary_semaphore
 #include <chrono>
-#include <vector>
 
 /* public macros ================================================================= */
 #define KEYS_INVALID_TIME -1
 #define KEY_COUNT 4
 
 /* types ================================================================= */
-
 enum keys_ButtonState_t
 {
     STATE_BUTTON_UP,
@@ -23,7 +21,7 @@ enum keys_ButtonState_t
 /* Configuración y datos de cada tecla */
 struct t_key_config
 {
-    gpioMap_t btn;                      // Configuración de GPIO
+    gpioMap_t btn;
 };
 
 struct t_key_data
@@ -31,7 +29,7 @@ struct t_key_data
     keys_ButtonState_t state;
     std::chrono::steady_clock::time_point time_down;
     std::chrono::steady_clock::time_point time_up;
-    std::binary_semaphore sem_btn{0};   // Semáforo binario para sincronización de la tecla
+    std::binary_semaphore sem_btn;   // Semáforo binario para sincronización de la tecla
     int time_diff;
 
     t_key_data();
@@ -42,7 +40,5 @@ struct t_key_data
 void keys_init();
 int keys_get_diff( uint32_t index );
 void keys_clear_diff( uint32_t index );
-void keys_service_task();
-void keys_Update( uint32_t index );
 void key_wait( uint32_t index );
 #endif /* KEYS_H_ */

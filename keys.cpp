@@ -3,23 +3,14 @@
 #include <array>
 #include <chrono>
 #include <iostream>
-#include <windows.h> // Para GetAsyncKeyState en Windows
+
 /*==================[ Inclusions ]============================================*/
 #include "keys.h"
 #include "gpio.h"
 
 /*=====[ Definitions of private data types ]===================================*/
 
-/*=====[Definition macros of private constants]==============================*/
-
-#define DEBOUNCE_TIME 200
-
-/*=====[Prototypes (declarations) of private functions]======================*/
-static void keys_reset( uint32_t index );
-static void keys_event_handler_button_pressed( uint32_t index );
-static void keys_event_handler_button_release( uint32_t index );
-
-/*=====[Definitions of public global variables]==============================*/
+/*=====[ Definitions of private objects ]===================================*/
 constexpr std::array<t_key_config, KEY_COUNT> keys_config = {{
         { gpioMap_t::TEC1 },
         { gpioMap_t::TEC2 },
@@ -28,10 +19,23 @@ constexpr std::array<t_key_config, KEY_COUNT> keys_config = {{
     }
 };
 
-std::array<t_key_data, KEY_COUNT> keys_data;    // Cambiado a std::array
+std::array<t_key_data, keys_config.size() > keys_data;    // Cambiado a std::array
+
+/*=====[Definition macros of private constants]==============================*/
+
+#define DEBOUNCE_TIME 50
+
+/*=====[Prototypes (declarations) of private functions]======================*/
+static void keys_reset( uint32_t index );
+static void keys_event_handler_button_pressed( uint32_t index );
+static void keys_event_handler_button_release( uint32_t index );
+
+/*=====[Definitions of public global variables]==============================*/
+void keys_service_task();
+void keys_Update( uint32_t index );
 
 /*=====[Implementations of public functions]=================================*/
-t_key_data::t_key_data() : state( STATE_BUTTON_UP ), time_diff( KEYS_INVALID_TIME )
+t_key_data::t_key_data() : state( STATE_BUTTON_UP ), time_diff( KEYS_INVALID_TIME ), sem_btn( 0 )
 {
 }
 
@@ -49,10 +53,6 @@ void keys_init()
 {
     uint32_t i;
 
-    for ( i = 0; i < KEY_COUNT; ++i )
-    {
-        keys_data[i] = t_key_data();
-    }
 
     std::thread( keys_service_task ).detach();
 }
@@ -75,6 +75,8 @@ void keys_Update( int index )
             /* CHECK TRANSITION CONDITIONS */
             if (!gpioRead( keys_config[index].btn ) )
             {
+                std::cout << "Button " << index << " pressed\n";
+
                 keys_data[index].state = STATE_BUTTON_DOWN;
 
                 /* ACCION DEL EVENTO !*/
@@ -101,6 +103,8 @@ void keys_Update( int index )
 
             if ( gpioRead( keys_config[index].btn ) )
             {
+                std::cout << "Button " << index << " released\n";
+
                 keys_data[index].state = STATE_BUTTON_UP;
 
                 /* ACCION DEL EVENTO ! */

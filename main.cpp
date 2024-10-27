@@ -24,7 +24,6 @@
 /*==================[definiciones de datos internos]=========================*/
 
 std::vector<gpioMap_t> leds_t = {gpioMap_t::LEDB, gpioMap_t::LED1, gpioMap_t::LED2, gpioMap_t::LED3};
-std::vector<gpioMap_t> gpio_t = {gpioMap_t::GPIO7, gpioMap_t::GPIO5, gpioMap_t::GPIO3, gpioMap_t::GPIO1};
 
 /*==================[definiciones de datos externos]=========================*/
 
@@ -35,8 +34,6 @@ void gpio_init( void );
 void tarea_led( size_t index );
 
 /*==================[funcion principal]======================================*/
-
-// FUNCION PRINCIPAL, PUNTO DE ENTRADA AL PROGRAMA LUEGO DE ENCENDIDO O RESET.
 int main()
 {
     // ---------- CONFIGURACIONES ------------------------------
@@ -47,7 +44,7 @@ int main()
 
     std::vector<std::thread> led_threads;
 
-    // Crear tarea en freeRTOS
+    // Crear tarea 
     for ( size_t i = 0; i < leds_t.size(); ++i )
     {
         led_threads.emplace_back( tarea_led, i );
@@ -65,17 +62,9 @@ int main()
     return 0;
 }
 
-
-
 /*==================[definiciones de funciones internas]=====================*/
 void gpio_init()
 {
-    gpioInit( gpioMap_t::GPIO0, true );
-
-    for ( auto &gpio : gpio_t )
-    {
-        gpioInit( gpio, true );
-    }
 }
 
 /*==================[definiciones de funciones externas]=====================*/
@@ -96,9 +85,7 @@ void tarea_led( size_t index )
         keys_clear_diff( index );
 
         gpioWrite( leds_t[index], true );
-        gpioWrite( gpio_t[index], true );
         std::this_thread::sleep_for( std::chrono::milliseconds( dif ) );
         gpioWrite( leds_t[index], false );
-        gpioWrite( gpio_t[index], false );
     }
 }

@@ -21,25 +21,19 @@ enum class gpioMap_t
     TEC1,
     TEC2,
     TEC3,
-    TEC4,
-    GPIO0,
-    GPIO7,
-    GPIO5,
-    GPIO3,
-    GPIO1
+    TEC4
 };
 
 // Función simulada para inicializar un pin GPIO
 inline void gpioInit( gpioMap_t pin, bool is_output )
 {
-    std::cout << "GPIO: " << static_cast<int>( pin ) <<
-              ( is_output ? " as out.\n" : " as in.\n" );
+    std::cout << "GPIO: " << static_cast<int>( pin ) << ( is_output ? " as out.\n" : " as in.\n" );
 }
 
 // Función simulada para escribir en un pin GPIO
 inline void gpioWrite( gpioMap_t pin, bool state )
 {
-    std::cout << "GPIO " << static_cast<int>( pin ) << " is " << ( state ? "ON\n" : "OFF\n" );
+    std::cout << "GPIO " << static_cast<int>( pin ) << " is " << ( state ? "DOWN\n" : "UP\n" );
 }
 
 // Función de ayuda para lectura de teclado en Linux
@@ -76,8 +70,6 @@ inline bool kbhit()
 inline bool gpioRead( gpioMap_t pin )
 {
 #ifdef _WIN32
-    std::cout << "read " << static_cast<int>( pin ) << std::endl;
-
     // Solo los pines asociados a las teclas tienen lectura permitida
     switch ( pin )
     {

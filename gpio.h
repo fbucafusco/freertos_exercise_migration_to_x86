@@ -4,7 +4,8 @@
 #include <iostream>
 
 // Tipo básico para representar un pin GPIO
-enum class gpioMap_t {
+enum class gpioMap_t
+{
     LEDB,
     LED1,
     LED2,
@@ -21,13 +22,17 @@ enum class gpioMap_t {
 };
 
 // Función simulada para inicializar un pin GPIO
-inline void gpioInit(gpioMap_t pin, bool is_output) {
-    std::cout << "Inicializando GPIO: " << static_cast<int>(pin) << (is_output ? " como salida.\n" : " como entrada.\n");
+inline void gpioInit( gpioMap_t pin, bool is_output )
+{
+    std::cout << "Inicializando GPIO: " << static_cast<int>( pin ) <<
+              ( is_output ? " como salida.\n" : " como entrada.\n" );
 }
 
 // Función simulada para escribir en un pin GPIO
-inline void gpioWrite(gpioMap_t pin, bool state) {
-    std::cout << "GPIO " << static_cast<int>(pin) << " está ahora " << (state ? "ENCENDIDO\n" : "APAGADO\n");
+inline void gpioWrite( gpioMap_t pin, bool state )
+{
+    std::cout << "GPIO " << static_cast<int>( pin ) << " está ahora " <<
+              ( state ? "ENCENDIDO\n" : "APAGADO\n" );
 }
 
 #endif /* GPIO_H_ */

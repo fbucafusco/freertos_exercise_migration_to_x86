@@ -1,72 +1,95 @@
+/*==================[inclusiones]============================================*/
 #include <iostream>
 #include <thread>
 #include <vector>
-#include <mutex>
-#include <condition_variable>
 #include <chrono>
 #include "gpio.h"
 #include "keys.h"
 
-// Configuraciones y definiciones
+/*==================[definiciones y macros]==================================*/
 #define RATE 1000
 #define LED_RATE std::chrono::milliseconds(RATE)
 #define WELCOME_MSG "Ejercicio D_2.\r\n"
+/*==================[definiciones de datos internos]=========================*/
 
-std::vector<gpioMap_t> leds_t = { gpioMap_t::LEDB, gpioMap_t::LED1, gpioMap_t::LED2, gpioMap_t::LED3 };
-std::vector<gpioMap_t> gpio_t = { gpioMap_t::GPIO7, gpioMap_t::GPIO5, gpioMap_t::GPIO3, gpioMap_t::GPIO1 };
+std::vector<gpioMap_t> leds_t = {gpioMap_t::LEDB, gpioMap_t::LED1, gpioMap_t::LED2, gpioMap_t::LED3};
+std::vector<gpioMap_t> gpio_t = {gpioMap_t::GPIO7, gpioMap_t::GPIO5, gpioMap_t::GPIO3, gpioMap_t::GPIO1};
 
-// std::mutex mtx;
-// std::condition_variable cv;
+/*==================[definiciones de datos externos]=========================*/
+extern std::vector<t_key_config> keys_config;
 
-void gpio_init() {
-    gpioInit(gpioMap_t::GPIO0, true);
-    for (auto& gpio : gpio_t) {
-        gpioInit(gpio, true);
-    }
-}
 
-void tarea_led(size_t index) {
+/*==================[declaraciones de funciones internas]====================*/
+void gpio_init( void );
 
-    std::cout << "Tarea LED " << index << " iniciada" << std::endl;
-    auto xPeriodicity = LED_RATE;
-    auto lastWakeTime = std::chrono::steady_clock::now();
+// Prototipo de funcion de la tarea
+void tarea_led(size_t index);
 
-    while (true) 
-    {
-        std::unique_lock<std::mutex> lock(mtx);        
-        cv.wait(lock); // Espera hasta recibir una señal de tecla
-        int dif = keys_get_diff(index);
-        keys_clear_diff(index);
+/*==================[funcion principal]======================================*/
 
-        gpioWrite(leds_t[index], true);  // Encender
-        gpioWrite(gpio_t[index], true);
-        std::this_thread::sleep_for(std::chrono::milliseconds(dif));
-        gpioWrite(leds_t[index], false); // Apagar
-        gpioWrite(gpio_t[index], false);
-
-        lastWakeTime += xPeriodicity;
-        std::this_thread::sleep_until(lastWakeTime);
-    }
-}
-
-int main() {
-    std::cout << WELCOME_MSG << std::endl;
+// FUNCION PRINCIPAL, PUNTO DE ENTRADA AL PROGRAMA LUEGO DE ENCENDIDO O RESET.
+int main()
+{
+    // ---------- CONFIGURACIONES ------------------------------
 
     gpio_init();
 
-    // Inicializar hilos para cada LED
+    std::cout << WELCOME_MSG << std::endl;
+
     std::vector<std::thread> led_threads;
-    for (size_t i = 0; i < leds_t.size(); ++i) {
+
+    // Crear tarea en freeRTOS
+    for (size_t i = 0; i < leds_t.size(); ++i)
+    {
         led_threads.emplace_back(tarea_led, i);
     }
 
-    // Inicializar teclas
+    // Inicializo driver de teclas
     keys_init();
 
-    // Ejecutar los hilos
-    for (auto& thread : led_threads) {
+    // joining threads
+    for (auto &thread : led_threads)
+    {
         thread.join();
     }
 
     return 0;
+}
+
+
+
+/*==================[definiciones de funciones internas]=====================*/
+void gpio_init()
+{
+    gpioInit(gpioMap_t::GPIO0, true);
+	
+    for (auto &gpio : gpio_t)
+    {
+        gpioInit(gpio, true);
+    }
+}
+
+/*==================[definiciones de funciones externas]=====================*/
+// Implementacion de funcion de la tarea
+void tarea_led(size_t index)
+{
+    while (true)
+    {
+        keys_config[index].sem_btn.acquire(); // Espera a la liberación del semáforo de su tecla específica
+
+        int dif = keys_get_diff(index);
+        
+        if (dif == KEYS_INVALID_TIME)
+        {
+            continue;
+        }
+
+        keys_clear_diff(index);
+
+        gpioWrite(leds_t[index], true);
+        gpioWrite(gpio_t[index], true);
+        std::this_thread::sleep_for(std::chrono::milliseconds(dif));
+        gpioWrite(leds_t[index], false);
+        gpioWrite(gpio_t[index], false);
+    }
 }

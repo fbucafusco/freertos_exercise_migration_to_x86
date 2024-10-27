@@ -24,7 +24,6 @@ enum keys_ButtonState_t
 struct t_key_config
 {
     gpioMap_t btn;                      // Configuración de GPIO
-    std::binary_semaphore sem_btn{0};   // Semáforo binario para sincronización de la tecla
 };
 
 struct t_key_data
@@ -32,6 +31,7 @@ struct t_key_data
     keys_ButtonState_t state;
     std::chrono::steady_clock::time_point time_down;
     std::chrono::steady_clock::time_point time_up;
+    std::binary_semaphore sem_btn{0};   // Semáforo binario para sincronización de la tecla
     int time_diff;
 
     t_key_data();
@@ -44,5 +44,5 @@ int keys_get_diff( uint32_t index );
 void keys_clear_diff( uint32_t index );
 void keys_service_task();
 void keys_Update( uint32_t index );
-
+void key_wait( uint32_t index );
 #endif /* KEYS_H_ */

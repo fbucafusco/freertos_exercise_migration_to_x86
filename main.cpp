@@ -27,8 +27,6 @@ std::vector<gpioMap_t> leds_t = {gpioMap_t::LEDB, gpioMap_t::LED1, gpioMap_t::LE
 std::vector<gpioMap_t> gpio_t = {gpioMap_t::GPIO7, gpioMap_t::GPIO5, gpioMap_t::GPIO3, gpioMap_t::GPIO1};
 
 /*==================[definiciones de datos externos]=========================*/
-extern std::vector<t_key_config> keys_config;
-
 
 /*==================[declaraciones de funciones internas]====================*/
 void gpio_init( void );
@@ -86,7 +84,7 @@ void tarea_led( size_t index )
 {
     while ( true )
     {
-        keys_config[index].sem_btn.acquire(); // Espera a la liberación del semáforo de su tecla específica
+        key_wait(  index ); // Espera a la liberación del semáforo de su tecla específica
 
         int dif = keys_get_diff( index );
 

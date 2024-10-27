@@ -1,6 +1,6 @@
 #include <thread>
 #include <semaphore>
-#include <vector>
+#include <array>
 #include <chrono>
 #include <iostream>
 #include <windows.h> // Para GetAsyncKeyState en Windows
@@ -9,7 +9,7 @@
 #include "gpio.h"
 
 /*=====[ Definitions of private data types ]===================================*/
-const std::vector<gpioMap_t> btn_t = {gpioMap_t::TEC1, gpioMap_t::TEC2, gpioMap_t::TEC3, gpioMap_t::TEC4};
+
 /*=====[Definition macros of private constants]==============================*/
 
 #define DEBOUNCE_TIME 200
@@ -18,9 +18,17 @@ const std::vector<gpioMap_t> btn_t = {gpioMap_t::TEC1, gpioMap_t::TEC2, gpioMap_
 static void keys_reset( uint32_t index );
 static void keys_event_handler_button_pressed( uint32_t index );
 static void keys_event_handler_button_release( uint32_t index );
+
 /*=====[Definitions of public global variables]==============================*/
-std::vector<t_key_data> keys_data( KEY_COUNT );
-std::vector<t_key_config> keys_config( KEY_COUNT );
+constexpr std::array<t_key_config, KEY_COUNT> keys_config = {{
+        { gpioMap_t::TEC1 },
+        { gpioMap_t::TEC2 },
+        { gpioMap_t::TEC3 },
+        { gpioMap_t::TEC4 }
+    }
+};
+
+std::array<t_key_data, KEY_COUNT> keys_data;    // Cambiado a std::array
 
 /*=====[Implementations of public functions]=================================*/
 t_key_data::t_key_data() : state( STATE_BUTTON_UP ), time_diff( KEYS_INVALID_TIME )
@@ -40,11 +48,10 @@ void keys_clear_diff( uint32_t index )
 void keys_init()
 {
     uint32_t i;
-    
+
     for ( i = 0; i < KEY_COUNT; ++i )
     {
         keys_data[i] = t_key_data();
-        keys_config[i].btn = btn_t[i];
     }
 
     std::thread( keys_service_task ).detach();
@@ -131,7 +138,7 @@ void keys_event_handler_button_release( uint32_t index )
 
     if ( keys_data[index].time_diff > 0 )
     {
-        keys_config[index].sem_btn.release(); // Libera el semáforo binario solo para el LED asociado a esta tecla
+        keys_data[index].sem_btn.release(); // Libera el semáforo binario solo para el LED asociado a esta tecla
     }
 }
 
@@ -145,12 +152,15 @@ void keys_service_task()
 {
     while ( true )
     {
-        // for ( auto &key : keys_config )
-
         for ( int i = 0; i < KEY_COUNT; i++ )
         {
             keys_Update( i );
         }
         std::this_thread::sleep_for( std::chrono::milliseconds( DEBOUNCE_TIME ) );
     }
+}
+
+void key_wait( uint32_t index )
+{
+    keys_data[index].sem_btn.acquire();
 }
